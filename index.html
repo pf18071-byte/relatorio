@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Faturamento - Academia O2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="max-w-7xl mx-auto px-4 py-8 md:px-8">
+        <!-- Header -->
+        <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Relatório de Faturamento - Academia O2
+                </h1>
+                <p class="text-slate-500 text-sm mt-1">Visão geral financeira e controle de faturas recebidas</p>
+            </div>
+            <div class="bg-white p-1 rounded-lg shadow-sm border border-slate-200 flex">
+                <button onclick="filterTable('Todos')" class="filter-btn px-4 py-1.5 text-sm font-medium rounded-md bg-slate-700 text-white shadow-sm">Todos</button>
+                <button onclick="filterTable('Recebida')" class="filter-btn px-4 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:bg-slate-100">Recebidas</button>
+                <button onclick="filterTable('Vencida')" class="filter-btn px-4 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:bg-slate-100">Vencidas</button>
+            </div>
+        </header>
+
+        <!-- KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-slate-500 text-sm font-medium uppercase">Total Faturado</span>
+                    <div class="p-2 bg-slate-100 rounded-lg text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <p id="total-kpi" class="text-3xl font-bold text-slate-900">R$ 0,00</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-slate-500 text-sm font-medium uppercase">Recebidas</span>
+                    <div class="p-2 bg-slate-100 rounded-lg text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <p id="recebidas-kpi" class="text-3xl font-bold text-slate-700">R$ 0,00</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-slate-500 text-sm font-medium uppercase">Vencidas</span>
+                    <div class="p-2 bg-slate-100 rounded-lg text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <p id="vencidas-kpi" class="text-3xl font-bold text-slate-400">R$ 0,00</p>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">Valor por Cliente</h2>
+                <div class="h-72">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">Distribuição por Situação</h2>
+                <div class="h-72 flex justify-center">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-100">
+                <h2 class="text-lg font-semibold">Detalhamento das Faturas</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left" id="faturaTable">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                        <tr>
+                            <th class="px-6 py-4">Cliente</th>
+                            <th class="px-6 py-4">Vencimento</th>
+                            <th class="px-6 py-4">Valor</th>
+                            <th class="px-6 py-4 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <!-- Conteúdo será inserido via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const rawData = [
+            { nome: "FRIGORIFICO MAISA LTDA", vencimento: "2021-03-10", valor: 1027, situacao: "Recebida" },
+            { nome: "FRIGORIFICO MAISA LTDA", vencimento: "2021-03-30", valor: 1027, situacao: "Recebida" },
+            { nome: "REGINA RODRIGUES MORAES", vencimento: "2021-03-22", valor: 700, situacao: "Recebida" },
+            { nome: "SOLEDADE ACÁCIA VIEIRA FAGUNDES", vencimento: "2021-04-30", valor: 580, situacao: "Vencida" },
+            { nome: "ANA CRISTINA FROES LOPES", vencimento: "2021-04-13", valor: 802, situacao: "Recebida" },
+            { nome: "ANA CRISTINA FROES LOPES", vencimento: "2021-03-23", valor: 880.9, situacao: "Vencida" },
+            { nome: "FRANCISCO DE ASSIS PEREIRA", vencimento: "2021-04-10", valor: 1200, situacao: "Recebida" },
+            { nome: "MARIA EDUARDA SILVA", vencimento: "2021-03-15", valor: 450, situacao: "Recebida" },
+            { nome: "JOSE ROBERTO SANTOS", vencimento: "2021-05-01", valor: 930, situacao: "Vencida" },
+            { nome: "LUCIANA MENDES", vencimento: "2021-04-20", valor: 1500, situacao: "Recebida" },
+        ];
+
+        function formatCurrency(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function updateMetrics() {
+            const total = rawData.reduce((acc, curr) => acc + curr.valor, 0);
+            const recebidas = rawData.filter(d => d.situacao === 'Recebida').reduce((acc, curr) => acc + curr.valor, 0);
+            const vencidas = rawData.filter(d => d.situacao === 'Vencida').reduce((acc, curr) => acc + curr.valor, 0);
+
+            document.getElementById('total-kpi').innerText = formatCurrency(total);
+            document.getElementById('recebidas-kpi').innerText = formatCurrency(recebidas);
+            document.getElementById('vencidas-kpi').innerText = formatCurrency(vencidas);
+        }
+
+        function renderTable(filter = 'Todos') {
+            const tbody = document.querySelector('#faturaTable tbody');
+            tbody.innerHTML = '';
+            
+            rawData.filter(d => filter === 'Todos' || d.situacao === filter).forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-slate-900">${row.nome}</td>
+                    <td class="px-6 py-4 text-slate-600">${row.vencimento}</td>
+                    <td class="px-6 py-4 font-semibold">${formatCurrency(row.valor)}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex justify-center">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${row.situacao === 'Recebida' ? 'bg-slate-100 text-slate-700' : 'bg-slate-50 text-slate-400 border border-slate-200'}">
+                                ${row.situacao}
+                            </span>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTable(status) {
+            renderTable(status);
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if(btn.innerText.includes(status === 'Recebida' ? 'Recebidas' : status)) {
+                    btn.classList.add('bg-slate-700', 'text-white');
+                    btn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+                } else {
+                    btn.classList.remove('bg-slate-700', 'text-white');
+                    btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+                }
+            });
+        }
+
+        function initCharts() {
+            // Bar Chart
+            const clientData = {};
+            rawData.forEach(d => clientData[d.nome.split(' ')[0]] = (clientData[d.nome.split(' ')[0]] || 0) + d.valor);
+            
+            new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(clientData),
+                    datasets: [{
+                        label: 'Valor Total',
+                        data: Object.values(clientData),
+                        backgroundColor: '#475569',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Pie Chart
+            const statusData = { 'Recebida': 0, 'Vencida': 0 };
+            rawData.forEach(d => statusData[d.situacao]++);
+
+            new Chart(document.getElementById('pieChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Recebidas', 'Vencidas'],
+                    datasets: [{
+                        data: [statusData['Recebida'], statusData['Vencida']],
+                        backgroundColor: ['#64748b', '#cbd5e1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        window.onload = () => {
+            updateMetrics();
+            renderTable();
+            initCharts();
+        };
+    </script>
+</body>
+</html>
